@@ -95,7 +95,7 @@
       color: var(--text-muted);
       white-space: nowrap;
     }
-    .period-bar-filter select {
+    .period-bar-filter input[type="date"] {
       padding: 5px 10px;
       border: 1.5px solid var(--border);
       border-radius: 7px;
@@ -106,7 +106,7 @@
       color: var(--text);
       outline: none;
     }
-    .period-bar-filter select:focus { border-color: var(--accent); }
+    .period-bar-filter input[type="date"]:focus { border-color: var(--accent); }
     .period-bar-filter .filter-badge {
       font-size: 11px;
       color: var(--success);
@@ -416,8 +416,8 @@
   <button class="period-tab" onclick="showPeriod('linkedin-ads', this)">LinkedIn Ads</button>
   <button class="period-tab" onclick="showPeriod('alertas', this)">⚠ Alertas</button>
   <div class="period-bar-filter">
-    <label>📅 Semana:</label>
-    <select id="week-selector" onchange="setWeek(parseInt(this.value))"></select>
+    <label>📅 Data:</label>
+    <input type="date" id="date-picker" onchange="setWeekFromDate(this.value)">
     <span class="filter-badge" id="week-filter-badge"></span>
     <span class="filter-latest" id="week-filter-latest" onclick="jumpToLatest()" style="display:none">→ Mais recente</span>
   </div>
@@ -808,16 +808,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('report-period').textContent = D.reportPeriod;
   document.getElementById('update-note').textContent = 'Dashboard atualizado automaticamente pelos agentes agendados · Última coleta: ' + dt.toLocaleDateString('pt-BR');
 
-  // Populate week selector
-  const sel = document.getElementById('week-selector');
+  // Init date picker
+  const picker = document.getElementById('date-picker');
   const allWeeks = D.googleAds.weekly;
-  allWeeks.forEach((wk, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = wk.week;
-    if (i === allWeeks.length - 1) opt.selected = true;
-    sel.appendChild(opt);
-  });
+  if (picker && allWeeks.length > 0) {
+    picker.min = allWeeks[0].periodo;
+    picker.max = allWeeks[allWeeks.length - 1].periodo;
+    picker.value = allWeeks[allWeeks.length - 1].periodo;
+  }
 
   renderAll(currentWeekIdx);
 });
@@ -827,9 +825,24 @@ function setWeek(idx) {
   renderAll(idx);
 }
 
+function setWeekFromDate(dateStr) {
+  const d = new Date(dateStr);
+  const weeks = D.googleAds.weekly;
+  let found = 0;
+  for (let i = 0; i < weeks.length; i++) {
+    const start = new Date(weeks[i].periodo);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    if (d >= start && d <= end) { found = i; break; }
+    if (d >= start) found = i;
+  }
+  setWeek(found);
+}
+
 function jumpToLatest() {
   const last = D.googleAds.weekly.length - 1;
-  document.getElementById('week-selector').value = last;
+  const picker = document.getElementById('date-picker');
+  if (picker) picker.value = D.googleAds.weekly[last].periodo;
   setWeek(last);
 }
 
@@ -844,12 +857,15 @@ function renderAll(weekIdx) {
 }
 
 function updateFilterBadge(weekIdx) {
+  const wk = D.googleAds.weekly[weekIdx];
   const total = D.googleAds.weekly.length;
   const isLatest = weekIdx === total - 1;
   const badge = document.getElementById('week-filter-badge');
   const btn = document.getElementById('week-filter-latest');
-  if (badge) badge.textContent = isLatest ? '✅ Semana mais recente' : `Semana ${weekIdx + 1} de ${total}`;
+  const picker = document.getElementById('date-picker');
+  if (badge) badge.textContent = wk ? (isLatest ? `✅ ${wk.week}` : wk.week) : '';
   if (btn) btn.style.display = isLatest ? 'none' : 'inline';
+  if (picker && wk && picker.value !== wk.periodo) picker.value = wk.periodo;
 }
 
 // ══════════════════════════
@@ -1003,7 +1019,7 @@ function renderMensal(weekIdx) {
   const selectedWeek = D.googleAds.weekly[weekIdx ?? currentWeekIdx];
   const selectedPeriod = selectedWeek?.periodo; // e.g. "2026-04-07"
   // Match month by comparing year-month prefix
-  let highlightMonthIdx = m.length - 2; // default: last complete month
+  let highlightMonthIdx = m.length - 1; // default: last complete month
   if (selectedPeriod) {
     const ym = selectedPeriod.substring(0, 7); // "2026-04"
     const found = m.findIndex(x => x.periodo.substring(0, 7) === ym);
