@@ -290,6 +290,53 @@
       padding: 16px 0 8px;
     }
 
+    /* WEEK FILTER BAR */
+    .week-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding: 12px 18px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .week-filter-bar label {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .week-filter-bar select {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--light);
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .week-filter-bar select:focus { border-color: var(--accent); }
+    .week-filter-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--light);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .week-filter-latest {
+      font-size: 12px;
+      color: var(--success);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     /* HIDDEN PERIOD VIEWS */
     .period-view { display: none; }
     .period-view.active { display: block; }
@@ -343,6 +390,14 @@
     </div>
     <div class="alert-banner">
       ⚠️ <strong>CPL R$294</strong> esta semana — acima da média mensal de março (R$233). Meta B2B saudável: R$80–200.
+    </div>
+
+    <!-- Filtro de Semana -->
+    <div class="week-filter-bar">
+      <label>📅 Semana:</label>
+      <select id="week-selector" onchange="renderSemanal(parseInt(this.value))"></select>
+      <span class="week-filter-badge" id="week-filter-badge"></span>
+      <span class="week-filter-latest" id="week-filter-latest" onclick="jumpToLatest()" style="display:none">→ Ver semana mais recente</span>
     </div>
 
     <!-- KPIs Semana -->
@@ -715,7 +770,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('report-period').textContent = D.reportPeriod;
   document.getElementById('update-note').textContent = 'Dashboard atualizado automaticamente pelos agentes agendados · Última coleta: ' + dt.toLocaleDateString('pt-BR');
 
-  renderSemanal();
+  // Populate week selector
+  const sel = document.getElementById('week-selector');
+  const allWeeks = D.googleAds.weekly;
+  allWeeks.forEach((wk, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = wk.week;
+    if (i === allWeeks.length - 1) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  renderSemanal(allWeeks.length - 1);
   renderMensal();
   renderOrganico();
   renderSocial();
@@ -723,25 +789,46 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAlertas();
 });
 
+function jumpToLatest() {
+  const sel = document.getElementById('week-selector');
+  const last = D.googleAds.weekly.length - 1;
+  sel.value = last;
+  renderSemanal(last);
+}
+
 // ══════════════════════════
 // SEMANAL
 // ══════════════════════════
-function renderSemanal() {
+function renderSemanal(weekIdx) {
   const w = D.googleAds.weekly;
-  const cur = w[w.length - 1];
-  const prev = w[w.length - 2];
+  if (weekIdx == null) weekIdx = w.length - 1;
+  weekIdx = Math.max(0, Math.min(weekIdx, w.length - 1));
+
+  const cur = w[weekIdx];
+  const prev = weekIdx > 0 ? w[weekIdx - 1] : null;
+  const isLatest = weekIdx === w.length - 1;
   const li = D.linkedin;
+
+  // Update filter badge
+  const badge = document.getElementById('week-filter-badge');
+  const latestBtn = document.getElementById('week-filter-latest');
+  if (badge) badge.textContent = isLatest ? '✅ Semana mais recente' : `Semana ${weekIdx + 1} de ${w.length}`;
+  if (latestBtn) latestBtn.style.display = isLatest ? 'none' : 'inline';
 
   const la = D.linkedinAds;
   const laHasData = la.weekly && la.weekly.some(w => w.leads !== null);
-  const laCur = laHasData ? la.weekly[la.weekly.length - 1] : null;
+  // Match LinkedIn Ads week by week name, fallback to same index
+  const laWeekMap = {};
+  if (la.weekly) la.weekly.forEach(x => { laWeekMap[x.week] = x; });
+  const laCur = laHasData ? (laWeekMap[cur.week] || la.weekly[Math.min(weekIdx, la.weekly.length - 1)]) : null;
+  const laPrev = laHasData && weekIdx > 0 ? (laWeekMap[w[weekIdx-1]?.week] || null) : null;
 
   // KPIs
   const kpis = [
     // — Google Ads —
-    { label: 'Leads Google Ads (7d)', value: cur.conversoes, sub: 'via Search Ads', delta: delta(cur.conversoes, prev.conversoes), cls: 'green' },
-    { label: 'CPL Google Ads', value: fmtR(cur.cpl), sub: 'benchmark: R$80–200', delta: delta(cur.cpl, prev.cpl, true), cls: '' },
-    { label: 'Invest. Google Ads', value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: delta(cur.custo, prev.custo, true), cls: 'blue' },
+    { label: 'Leads Google Ads (7d)', value: cur.conversoes, sub: 'via Search Ads', delta: delta(cur.conversoes, prev?.conversoes), cls: 'green' },
+    { label: 'CPL Google Ads', value: fmtR(cur.cpl), sub: 'benchmark: R$80–200', delta: delta(cur.cpl, prev?.cpl, true), cls: '' },
+    { label: 'Invest. Google Ads', value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: delta(cur.custo, prev?.custo, true), cls: 'blue' },
     // — LinkedIn Ads —
     { label: 'Leads LinkedIn Ads (7d)', value: laHasData && laCur.leads != null ? laCur.leads : '—', sub: laHasData ? 'via Campaign Manager' : 'aguardando coleta', delta: '', cls: 'green' },
     { label: 'CPL LinkedIn Ads', value: laHasData && laCur.cpl != null ? fmtR(laCur.cpl) : '—', sub: 'benchmark: R$150–400', delta: '', cls: '' },
@@ -762,19 +849,21 @@ function renderSemanal() {
   const weeks = w.map(x => x.week);
   buildBarChart('chart-conversoes-weekly', weeks, [{
     label: 'Conversões', data: w.map(x => x.conversoes),
-    backgroundColor: w.map((x,i) => i === w.length-1 ? '#e94560' : 'rgba(233,69,96,0.3)'),
+    backgroundColor: w.map((x,i) => i === weekIdx ? '#e94560' : 'rgba(233,69,96,0.3)'),
     borderRadius: 6
   }], { suggestedMax: 8 });
 
   // Chart: CPL weekly
   buildLineChart('chart-cpl-weekly', weeks,
-    [{ label: 'CPL (R$)', data: w.map(x => x.cpl), borderColor: '#e94560', tension: 0.3 }],
+    [{ label: 'CPL (R$)', data: w.map(x => x.cpl), borderColor: '#e94560', tension: 0.3,
+       pointBackgroundColor: w.map((x,i) => i === weekIdx ? '#e94560' : 'rgba(233,69,96,0.4)'),
+       pointRadius: w.map((x,i) => i === weekIdx ? 7 : 3) }],
     { annotations: [{ value: 200, label: 'Benchmark R$200', color: 'red' }] }
   );
 
   // Chart: custo & cliques
   buildMixedChart('chart-custo-cliques', weeks,
-    w.map(x => x.custo), w.map(x => x.cliques));
+    w.map(x => x.custo), w.map(x => x.cliques), 'Custo (R$)', 'Cliques', weekIdx);
 
   // Chart: LinkedIn organic engagement
   const liw = D.linkedin.weekly;
@@ -793,7 +882,7 @@ function renderSemanal() {
     {
       label: 'Google Ads (R$)',
       data: w.map(x => x.custo),
-      backgroundColor: 'rgba(233,69,96,0.7)',
+      backgroundColor: w.map((x,i) => i === weekIdx ? 'rgba(233,69,96,0.95)' : 'rgba(233,69,96,0.35)'),
       borderRadius: 4
     },
     {
@@ -1142,23 +1231,28 @@ function buildLineChart(id, labels, datasets, opts = {}) {
   });
 }
 
-function buildMixedChart(id, labels, barData, lineData, barLabel = 'Custo (R$)', lineLabel = 'Cliques') {
+function buildMixedChart(id, labels, barData, lineData, barLabel = 'Custo (R$)', lineLabel = 'Cliques', highlightIdx = null) {
   const ctx = document.getElementById(id);
   if (!ctx) return;
   if (charts[id]) charts[id].destroy();
+  const barColors = highlightIdx != null
+    ? labels.map((x, i) => i === highlightIdx ? 'rgba(15,52,96,0.9)' : 'rgba(15,52,96,0.25)')
+    : labels.map(() => 'rgba(15,52,96,0.3)');
   charts[id] = new Chart(ctx, {
     data: {
       labels,
       datasets: [
         {
           type: 'bar', label: barLabel, data: barData,
-          backgroundColor: 'rgba(15,52,96,0.3)', borderColor: '#0f3460',
+          backgroundColor: barColors, borderColor: '#0f3460',
           borderRadius: 5, yAxisID: 'y'
         },
         {
           type: 'line', label: lineLabel, data: lineData,
           borderColor: '#e94560', borderWidth: 2.5,
-          pointRadius: 4, tension: 0.3, yAxisID: 'y2'
+          pointRadius: highlightIdx != null ? labels.map((x,i) => i === highlightIdx ? 7 : 3) : 4,
+          pointBackgroundColor: highlightIdx != null ? labels.map((x,i) => i === highlightIdx ? '#e94560' : 'rgba(233,69,96,0.4)') : '#e94560',
+          tension: 0.3, yAxisID: 'y2'
         }
       ]
     },
