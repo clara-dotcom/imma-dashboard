@@ -378,6 +378,16 @@
   <button class="period-tab" onclick="showPeriod('alertas', this)">⚠ Alertas</button>
 </div>
 
+<!-- FILTRO GLOBAL DE SEMANA -->
+<div style="background:#fff;border-bottom:1px solid var(--border);padding:10px 32px;">
+  <div class="week-filter-bar" style="margin-bottom:0">
+    <label>📅 Semana:</label>
+    <select id="week-selector" onchange="setWeek(parseInt(this.value))"></select>
+    <span class="week-filter-badge" id="week-filter-badge"></span>
+    <span class="week-filter-latest" id="week-filter-latest" onclick="jumpToLatest()" style="display:none">→ Ver semana mais recente</span>
+  </div>
+</div>
+
 <!-- MAIN CONTENT -->
 <div class="main">
 
@@ -390,14 +400,6 @@
     </div>
     <div class="alert-banner">
       ⚠️ <strong>CPL R$294</strong> esta semana — acima da média mensal de março (R$233). Meta B2B saudável: R$80–200.
-    </div>
-
-    <!-- Filtro de Semana -->
-    <div class="week-filter-bar">
-      <label>📅 Semana:</label>
-      <select id="week-selector" onchange="renderSemanal(parseInt(this.value))"></select>
-      <span class="week-filter-badge" id="week-filter-badge"></span>
-      <span class="week-filter-latest" id="week-filter-latest" onclick="jumpToLatest()" style="display:none">→ Ver semana mais recente</span>
     </div>
 
     <!-- KPIs Semana -->
@@ -747,6 +749,7 @@
 
 const D = IMMA_DATA;
 const charts = {};
+let currentWeekIdx = D.googleAds.weekly.length - 1; // default: semana mais recente
 
 function fmt(n, decimals=0, prefix='') {
   if (n == null) return '—';
@@ -781,19 +784,37 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.appendChild(opt);
   });
 
-  renderSemanal(allWeeks.length - 1);
-  renderMensal();
-  renderOrganico();
-  renderSocial();
-  renderLinkedinAds();
-  renderAlertas();
+  renderAll(currentWeekIdx);
 });
 
+function setWeek(idx) {
+  currentWeekIdx = idx;
+  renderAll(idx);
+}
+
 function jumpToLatest() {
-  const sel = document.getElementById('week-selector');
   const last = D.googleAds.weekly.length - 1;
-  sel.value = last;
-  renderSemanal(last);
+  document.getElementById('week-selector').value = last;
+  setWeek(last);
+}
+
+function renderAll(weekIdx) {
+  updateFilterBadge(weekIdx);
+  renderSemanal(weekIdx);
+  renderMensal(weekIdx);
+  renderOrganico(weekIdx);
+  renderSocial(weekIdx);
+  renderLinkedinAds(weekIdx);
+  renderAlertas(weekIdx);
+}
+
+function updateFilterBadge(weekIdx) {
+  const total = D.googleAds.weekly.length;
+  const isLatest = weekIdx === total - 1;
+  const badge = document.getElementById('week-filter-badge');
+  const btn = document.getElementById('week-filter-latest');
+  if (badge) badge.textContent = isLatest ? '✅ Semana mais recente' : `Semana ${weekIdx + 1} de ${total}`;
+  if (btn) btn.style.display = isLatest ? 'none' : 'inline';
 }
 
 // ══════════════════════════
@@ -808,13 +829,6 @@ function renderSemanal(weekIdx) {
   const prev = weekIdx > 0 ? w[weekIdx - 1] : null;
   const isLatest = weekIdx === w.length - 1;
   const li = D.linkedin;
-
-  // Update filter badge
-  const badge = document.getElementById('week-filter-badge');
-  const latestBtn = document.getElementById('week-filter-latest');
-  if (badge) badge.textContent = isLatest ? '✅ Semana mais recente' : `Semana ${weekIdx + 1} de ${w.length}`;
-  if (latestBtn) latestBtn.style.display = isLatest ? 'none' : 'inline';
-
   const la = D.linkedinAds;
   const laHasData = la.weekly && la.weekly.some(w => w.leads !== null);
   // Match LinkedIn Ads week by week name, fallback to same index
@@ -946,17 +960,30 @@ function renderSemanal(weekIdx) {
 // ══════════════════════════
 // MENSAL
 // ══════════════════════════
-function renderMensal() {
+function renderMensal(weekIdx) {
   const m = D.googleAds.monthly;
-  const cur = m[m.length - 2]; // março (mês completo)
-  const prev = m[m.length - 3]; // fevereiro
   const months = m.map(x => x.month);
 
+  // Find which month corresponds to the selected week
+  const selectedWeek = D.googleAds.weekly[weekIdx ?? currentWeekIdx];
+  const selectedPeriod = selectedWeek?.periodo; // e.g. "2026-04-07"
+  // Match month by comparing year-month prefix
+  let highlightMonthIdx = m.length - 2; // default: last complete month
+  if (selectedPeriod) {
+    const ym = selectedPeriod.substring(0, 7); // "2026-04"
+    const found = m.findIndex(x => x.periodo.substring(0, 7) === ym);
+    if (found >= 0) highlightMonthIdx = found;
+  }
+
+  const cur = m[highlightMonthIdx];
+  const prev = highlightMonthIdx > 0 ? m[highlightMonthIdx - 1] : null;
+  const monthLabel = cur.month;
+
   document.getElementById('kpis-mensal').innerHTML = [
-    { label: 'Conversões — Março', value: cur.conversoes, sub: 'leads Google Ads', delta: delta(cur.conversoes, prev.conversoes), cls: 'green' },
-    { label: 'CPL Março', value: fmtR(cur.cpl), sub: 'custo por lead', delta: delta(cur.cpl, prev.cpl, true), cls: '' },
-    { label: 'Investimento Março', value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: '', cls: 'blue' },
-    { label: 'Impressões Março', value: fmt(cur.impressoes), sub: `CTR ${((cur.cliques/cur.impressoes)*100).toFixed(1)}%`, delta: '', cls: 'purple' },
+    { label: `Conversões — ${monthLabel}`, value: cur.conversoes, sub: 'leads Google Ads', delta: delta(cur.conversoes, prev?.conversoes), cls: 'green' },
+    { label: `CPL ${monthLabel}`, value: fmtR(cur.cpl), sub: 'custo por lead', delta: delta(cur.cpl, prev?.cpl, true), cls: '' },
+    { label: `Investimento ${monthLabel}`, value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: '', cls: 'blue' },
+    { label: `Impressões ${monthLabel}`, value: fmt(cur.impressoes), sub: `CTR ${((cur.cliques/cur.impressoes)*100).toFixed(1)}%`, delta: '', cls: 'purple' },
   ].map(k => `<div class="kpi-card ${k.cls}">
     <div class="kpi-label">${k.label}</div>
     <div class="kpi-value">${k.value}</div>
@@ -966,19 +993,21 @@ function renderMensal() {
 
   buildBarChart('chart-conversoes-monthly', months, [{
     label: 'Conversões', data: m.map(x => x.conversoes),
-    backgroundColor: m.map((x,i) => i === m.length-2 ? '#e94560' : 'rgba(233,69,96,0.35)'),
+    backgroundColor: m.map((x,i) => i === highlightMonthIdx ? '#e94560' : 'rgba(233,69,96,0.35)'),
     borderRadius: 6
   }]);
 
   buildBarChart('chart-custo-monthly', months, [{
     label: 'Investimento (R$)', data: m.map(x => x.custo),
-    backgroundColor: m.map((x,i) => i === m.length-2 ? '#0f3460' : 'rgba(15,52,96,0.35)'),
+    backgroundColor: m.map((x,i) => i === highlightMonthIdx ? '#0f3460' : 'rgba(15,52,96,0.35)'),
     borderRadius: 6
   }]);
 
   buildLineChart('chart-cpl-monthly', months,
     [
-      { label: 'CPL (R$)', data: m.map(x => x.cpl), borderColor: '#533483', tension: 0.3 },
+      { label: 'CPL (R$)', data: m.map(x => x.cpl), borderColor: '#533483', tension: 0.3,
+        pointRadius: m.map((x,i) => i === highlightMonthIdx ? 7 : 3),
+        pointBackgroundColor: m.map((x,i) => i === highlightMonthIdx ? '#533483' : 'rgba(83,52,131,0.4)') },
       { label: 'Benchmark R$200', data: m.map(() => 200), borderColor: '#e74c3c', borderDash: [6,4], fill: false }
     ]
   );
@@ -989,14 +1018,18 @@ function renderMensal() {
 // ══════════════════════════
 // ORGÂNICO / SEO
 // ══════════════════════════
-function renderOrganico() {
+function renderOrganico(weekIdx) {
   const sc = D.searchConsole;
+  const scw = sc.weekly;
+  const idx = weekIdx ?? currentWeekIdx;
+  // Use weekly data for KPIs if available, else snapshot
+  const wkData = scw && scw[idx] ? scw[idx] : null;
 
   document.getElementById('kpis-seo').innerHTML = [
-    { label: 'Cliques Orgânicos (7d)', value: fmt(sc.cliques), sub: `vs. semana anterior`, cls: 'green' },
-    { label: 'Impressões (7d)', value: fmt(sc.impressoes), sub: 'no Google Search', cls: 'blue' },
-    { label: 'CTR Médio', value: sc.ctr + '%', sub: 'benchmark B2B: 3–5%', cls: '' },
-    { label: 'Posição Média', value: sc.posicaoMedia, sub: 'benchmark: < 10', cls: 'purple' },
+    { label: 'Cliques Orgânicos (7d)', value: fmt(wkData ? wkData.cliques : sc.cliques), sub: wkData ? wkData.week : 'vs. semana anterior', cls: 'green' },
+    { label: 'Impressões (7d)', value: fmt(wkData ? wkData.impressoes : sc.impressoes), sub: 'no Google Search', cls: 'blue' },
+    { label: 'CTR Médio', value: (wkData ? wkData.ctr : sc.ctr) + '%', sub: 'benchmark B2B: 3–5%', cls: '' },
+    { label: 'Posição Média', value: wkData ? wkData.posicao : sc.posicaoMedia, sub: 'benchmark: < 10', cls: 'purple' },
     { label: 'Páginas não indexadas', value: fmt(sc.paginasNaoIndexadas), sub: '⚠ Ação urgente', cls: '' },
   ].map(k => `<div class="kpi-card ${k.cls}">
     <div class="kpi-label">${k.label}</div>
@@ -1004,19 +1037,24 @@ function renderOrganico() {
     <div class="kpi-sub">${k.sub}</div>
   </div>`).join('');
 
-  const scw = sc.weekly;
   buildLineChart('chart-cliques-organic', scw.map(x => x.week),
-    [{ label: 'Cliques orgânicos', data: scw.map(x => x.cliques), borderColor: '#27ae60', tension: 0.3 }]);
+    [{ label: 'Cliques orgânicos', data: scw.map(x => x.cliques), borderColor: '#27ae60', tension: 0.3,
+       pointRadius: scw.map((x,i) => i === idx ? 7 : 3),
+       pointBackgroundColor: scw.map((x,i) => i === idx ? '#27ae60' : 'rgba(39,174,96,0.4)') }]);
 
   buildLineChart('chart-ctr-organic', scw.map(x => x.week),
     [
-      { label: 'CTR (%)', data: scw.map(x => x.ctr), borderColor: '#0f3460', tension: 0.3 },
+      { label: 'CTR (%)', data: scw.map(x => x.ctr), borderColor: '#0f3460', tension: 0.3,
+        pointRadius: scw.map((x,i) => i === idx ? 7 : 3),
+        pointBackgroundColor: scw.map((x,i) => i === idx ? '#0f3460' : 'rgba(15,52,96,0.4)') },
       { label: 'Benchmark 3%', data: scw.map(() => 3), borderColor: '#e74c3c', borderDash: [6,4], fill: false }
     ]
   );
 
   buildLineChart('chart-posicao', scw.map(x => x.week),
-    [{ label: 'Posição média', data: scw.map(x => x.posicao), borderColor: '#533483', tension: 0.3 }],
+    [{ label: 'Posição média', data: scw.map(x => x.posicao), borderColor: '#533483', tension: 0.3,
+       pointRadius: scw.map((x,i) => i === idx ? 7 : 3),
+       pointBackgroundColor: scw.map((x,i) => i === idx ? '#533483' : 'rgba(83,52,131,0.4)') }],
     { reverse: true }
   );
 
@@ -1035,13 +1073,16 @@ function renderOrganico() {
 // ══════════════════════════
 // SOCIAL
 // ══════════════════════════
-function renderSocial() {
+function renderSocial(weekIdx) {
   const li = D.linkedin;
   const ig = D.instagram;
+  const liw = li.weekly;
+  const idx = Math.min(weekIdx ?? currentWeekIdx, liw.length - 1);
+  const wkLi = liw[idx];
 
   document.getElementById('kpis-social').innerHTML = [
-    { label: 'Seguidores LinkedIn', value: fmt(li.seguidores.end), sub: `+${li.seguidores.growth} em 15 dias`, cls: 'blue' },
-    { label: 'Engaj. Médio LinkedIn', value: li.engajamentoMedio + '%', sub: `benchmark B2B: ${li.benchmarkB2B}%`, cls: 'green' },
+    { label: 'Seguidores LinkedIn', value: fmt(wkLi ? wkLi.seguidores : li.seguidores.end), sub: wkLi ? wkLi.week : `+${li.seguidores.growth} em 15 dias`, cls: 'blue' },
+    { label: 'Engaj. LinkedIn', value: (wkLi ? wkLi.engajamento : li.engajamentoMedio) + '%', sub: `benchmark B2B: ${li.benchmarkB2B}%`, cls: 'green' },
     { label: 'Seguidores Instagram', value: fmt(ig.seguidores), sub: ig.crescimento, cls: 'purple' },
     { label: 'Engaj. Médio Instagram', value: ig.engajamentoMedio + '%', sub: 'benchmark: 3–6%', cls: 'orange' },
     { label: 'Meta Ads', value: 'R$ 0', sub: D.metaAds.nota, cls: '' },
@@ -1051,13 +1092,16 @@ function renderSocial() {
     <div class="kpi-sub">${k.sub}</div>
   </div>`).join('');
 
-  const liw = li.weekly;
   buildLineChart('chart-linkedin-seguidores', liw.map(x => x.week),
-    [{ label: 'Seguidores', data: liw.map(x => x.seguidores), borderColor: '#0077b5', tension: 0.3, fill: true, backgroundColor: 'rgba(0,119,181,0.08)' }]);
+    [{ label: 'Seguidores', data: liw.map(x => x.seguidores), borderColor: '#0077b5', tension: 0.3, fill: true, backgroundColor: 'rgba(0,119,181,0.08)',
+       pointRadius: liw.map((x,i) => i === idx ? 7 : 3),
+       pointBackgroundColor: liw.map((x,i) => i === idx ? '#0077b5' : 'rgba(0,119,181,0.4)') }]);
 
   buildLineChart('chart-linkedin-eng-bench', liw.map(x => x.week),
     [
-      { label: 'Engajamento (%)', data: liw.map(x => x.engajamento), borderColor: '#0077b5', tension: 0.3 },
+      { label: 'Engajamento (%)', data: liw.map(x => x.engajamento), borderColor: '#0077b5', tension: 0.3,
+        pointRadius: liw.map((x,i) => i === idx ? 7 : 3),
+        pointBackgroundColor: liw.map((x,i) => i === idx ? '#0077b5' : 'rgba(0,119,181,0.4)') },
       { label: 'Benchmark B2B 3,5%', data: liw.map(() => 3.5), borderColor: '#e74c3c', borderDash: [6,4] }
     ]
   );
@@ -1092,16 +1136,20 @@ function renderSocial() {
 // ══════════════════════════
 // LINKEDIN ADS
 // ══════════════════════════
-function renderLinkedinAds() {
+function renderLinkedinAds(weekIdx) {
   const la = D.linkedinAds;
   const hasData = la.weekly && la.weekly.some(w => w.leads !== null);
 
-  // Sempre mostra a estrutura — com dados reais ou com "—"
   document.getElementById('linkedin-ads-no-data').style.display = hasData ? 'none' : 'flex';
   document.getElementById('linkedin-ads-charts').style.display = 'block';
 
-  const cur = hasData ? la.weekly[la.weekly.length - 1] : null;
-  const prev = hasData && la.weekly.length > 1 ? la.weekly[la.weekly.length - 2] : null;
+  const idx = weekIdx ?? currentWeekIdx;
+  const laMap = {};
+  if (la.weekly) la.weekly.forEach(x => { laMap[x.week] = x; });
+  const selectedWeekName = D.googleAds.weekly[idx]?.week;
+  const cur = hasData ? (laMap[selectedWeekName] || la.weekly[Math.min(idx, la.weekly.length - 1)]) : null;
+  const prevWeekName = idx > 0 ? D.googleAds.weekly[idx - 1]?.week : null;
+  const prev = hasData && prevWeekName ? (laMap[prevWeekName] || null) : null;
 
   const v = (field) => cur && cur[field] != null ? cur[field] : null;
 
@@ -1118,20 +1166,21 @@ function renderLinkedinAds() {
   </div>`).join('');
 
   // Usar semanas do Google Ads como eixo X base quando não há histórico LinkedIn
-  const baseWeeks = hasData ? la.weekly.map(w => w.week) : D.googleAds.weekly.map(w => w.week);
-  const laMap = {};
-  if (la.weekly) la.weekly.forEach(x => { laMap[x.week] = x; });
+  const baseWeeks = D.googleAds.weekly.map(w => w.week);
+  const hlIdx = idx; // highlight index in baseWeeks
 
   buildBarChart('chart-li-leads', baseWeeks, [{
     label: 'Leads', data: baseWeeks.map(wk => (laMap[wk] && laMap[wk].leads != null) ? laMap[wk].leads : 0),
-    backgroundColor: baseWeeks.map((wk,i) => i === baseWeeks.length-1 ? '#0077b5' : 'rgba(0,119,181,0.3)'),
+    backgroundColor: baseWeeks.map((wk,i) => i === hlIdx ? '#0077b5' : 'rgba(0,119,181,0.3)'),
     borderRadius: 6
   }]);
   buildLineChart('chart-li-cpl', baseWeeks,
-    [{ label: 'CPL (R$)', data: baseWeeks.map(wk => laMap[wk] ? laMap[wk].cpl : null), borderColor: '#0077b5', tension: 0.3 }]);
+    [{ label: 'CPL (R$)', data: baseWeeks.map(wk => laMap[wk] ? laMap[wk].cpl : null), borderColor: '#0077b5', tension: 0.3,
+       pointRadius: baseWeeks.map((wk,i) => i === hlIdx ? 7 : 3),
+       pointBackgroundColor: baseWeeks.map((wk,i) => i === hlIdx ? '#0077b5' : 'rgba(0,119,181,0.4)') }]);
   buildBarChart('chart-li-custo', baseWeeks, [{
     label: 'Investimento (R$)', data: baseWeeks.map(wk => (laMap[wk] && laMap[wk].investimento != null) ? laMap[wk].investimento : 0),
-    backgroundColor: baseWeeks.map((wk,i) => i === baseWeeks.length-1 ? '#0f3460' : 'rgba(15,52,96,0.3)'),
+    backgroundColor: baseWeeks.map((wk,i) => i === hlIdx ? '#0f3460' : 'rgba(15,52,96,0.3)'),
     borderRadius: 6
   }]);
   buildLineChart('chart-li-ctr', baseWeeks,
@@ -1276,6 +1325,9 @@ function showPeriod(name, btn) {
   document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   btn.classList.add('active');
+  // Re-render active tab with current week filter
+  const renders = { semanal: renderSemanal, mensal: renderMensal, organico: renderOrganico, social: renderSocial, 'linkedin-ads': renderLinkedinAds, alertas: renderAlertas };
+  if (renders[name]) renders[name](currentWeekIdx);
 }
 </script>
 
