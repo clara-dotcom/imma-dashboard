@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMMA — Dashboard de Marketing</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Dados históricos — atualizado pelos agentes agendados -->
+  <script src="dashboard-data.js?v=2"></script>
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --accent3: #533483;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --gray: #6c757d;
+      --light: #f8f9fa;
+      --border: #e9ecef;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --text-muted: #6c757d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent2) 100%);
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .header-logo {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 18px; letter-spacing: -1px;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header h1 span { font-weight: 300; opacity: 0.8; }
+    .header-meta { text-align: right; font-size: 13px; opacity: 0.8; }
+    .header-meta strong { display: block; font-size: 15px; opacity: 1; }
+
+    /* PERIOD TABS */
+    .period-bar {
+      background: white;
+      padding: 0 32px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .period-tab {
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      transition: all .2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      outline: none;
+    }
+    .period-tab:hover { color: var(--accent2); }
+    .period-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* MAIN */
+    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* ALERT BANNER */
+    .alert-banner {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #856404;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-banner.danger {
+      background: #f8d7da;
+      border-color: #f5c2c7;
+      color: #842029;
+    }
+    .alert-banner.info {
+      background: #d1ecf1;
+      border-color: #bee5eb;
+      color: #0c5460;
+    }
+
+    /* KPI GRID */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--accent);
+    }
+    .kpi-card.green::before { background: var(--success); }
+    .kpi-card.blue::before { background: var(--accent2); }
+    .kpi-card.purple::before { background: var(--accent3); }
+    .kpi-card.orange::before { background: var(--warning); }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .kpi-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+    .kpi-delta.up { background: #d4edda; color: #155724; }
+    .kpi-delta.down { background: #f8d7da; color: #721c24; }
+    .kpi-delta.neutral { background: #e9ecef; color: #495057; }
+
+    /* SECTION */
+    .section { margin-bottom: 32px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-active { background: #d4edda; color: #155724; }
+    .badge-alert { background: #f8d7da; color: #721c24; }
+    .badge-paused { background: #e9ecef; color: #495057; }
+
+    /* GRID 2-COL */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    /* CHART CARD */
+    .chart-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      border: 1px solid var(--border);
+    }
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .chart-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* TABLE */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: var(--text-muted);
+      background: var(--light);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #fafbfc; }
+
+    /* STATUS PILL */
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .pill-green { background: #d4edda; color: #155724; }
+    .pill-red { background: #f8d7da; color: #721c24; }
+    .pill-orange { background: #fff3cd; color: #856404; }
+    .pill-gray { background: #e9ecef; color: #495057; }
+
+    /* INSIGHT BOX */
+    .insight-box {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      color: white;
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .insight-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; opacity: .7; text-transform: uppercase; letter-spacing: .5px; }
+    .insight-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .insight-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+    /* PROGRESS BAR */
+    .progress-wrap { margin-bottom: 14px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+    .progress-bar-bg { background: #e9ecef; border-radius: 6px; height: 8px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 6px; transition: width .5s; }
+
+    /* TIMELINE NOTE */
+    .update-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 16px 0 8px;
+    }
+
+    /* HIDDEN PERIOD VIEWS */
+    .period-view { display: none; }
+    .period-view.active { display: block; }
+
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .main { padding: 16px; }
+      .header { padding: 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Dados carregados de dashboard-data.js -->
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">IM</div>
+    <div>
+      <h1>IMMA <span>Marketing Dashboard</span></h1>
+      <div style="font-size:12px;opacity:.7;margin-top:2px">imma.net.br · B2B Reconhecimento por Experiências</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <strong id="last-updated">Carregando...</strong>
+    <span id="report-period">—</span>
+  </div>
+</header>
+
+<!-- PERIOD TABS -->
+<div class="period-bar">
+  <button class="period-tab active" onclick="showPeriod('semanal', this)">Semanal</button>
+  <button class="period-tab" onclick="showPeriod('mensal', this)">Mensal</button>
+  <button class="period-tab" onclick="showPeriod('organico', this)">Orgânico / SEO</button>
+  <button class="period-tab" onclick="showPeriod('social', this)">Social</button>
+  <button class="period-tab" onclick="showPeriod('linkedin-ads', this)">LinkedIn Ads</button>
+  <button class="period-tab" onclick="showPeriod('alertas', this)">⚠ Alertas</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ──────── SEMANAL ──────── -->
+  <div class="period-view active" id="view-semanal">
+
+    <!-- Alerts -->
+    <div class="alert-banner danger">
+      🚨 <strong>Google Ads limitada pelo orçamento</strong> — campanha "11/02/26 | LEADS" atingiu limite de R$85/dia. Considera aumentar para maximizar conversões.
+    </div>
+    <div class="alert-banner">
+      ⚠️ <strong>CPL R$294</strong> esta semana — acima da média mensal de março (R$233). Meta B2B saudável: R$80–200.
+    </div>
+
+    <!-- KPIs Semana -->
+    <div class="kpi-grid" id="kpis-semanal"></div>
+
+    <!-- Charts Row -->
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">Google Ads — Conversões (7 semanas)</div>
+        <div class="chart-subtitle">Número de leads gerados por semana via Google Search</div>
+        <canvas id="chart-conversoes-weekly" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Google Ads — CPL (7 semanas)</div>
+        <div class="chart-subtitle">Custo por lead · Linha vermelha = benchmark B2B (R$200)</div>
+        <canvas id="chart-cpl-weekly" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">Google Ads — Investimento & Cliques</div>
+        <div class="chart-subtitle">Custo semanal (R$) e volume de cliques</div>
+        <canvas id="chart-custo-cliques" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">LinkedIn — Engajamento por semana (%)</div>
+        <div class="chart-subtitle">Taxa de engajamento média · Benchmark B2B: 3,5%</div>
+        <canvas id="chart-linkedin-weekly" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Comparativo Google Ads vs LinkedIn Ads -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📊 Comparativo de Canais Pagos — Google Ads vs LinkedIn Ads</div>
+      </div>
+      <div class="grid-2">
+        <div class="chart-card">
+          <div class="chart-title">Investimento semanal por canal (R$)</div>
+          <div class="chart-subtitle">Google Ads (vermelho) vs LinkedIn Ads (azul) · LinkedIn Ads: aguardando coleta</div>
+          <canvas id="chart-invest-comparativo" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Leads gerados por canal</div>
+          <div class="chart-subtitle">Google Ads (vermelho) vs LinkedIn Ads (azul) · LinkedIn Ads: aguardando coleta</div>
+          <canvas id="chart-leads-comparativo" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campanha Ativa -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          🎯 Google Ads — Campanhas
+          <span class="section-badge badge-active">1 ativa</span>
+          <span class="section-badge badge-paused">12 pausadas</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <table class="data-table" id="table-campanhas"></table>
+      </div>
+    </div>
+
+    <!-- LinkedIn Posts -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">💼 LinkedIn — Top Posts (15 dias)</div>
+      </div>
+      <div class="chart-card">
+        <table class="data-table" id="table-linkedin"></table>
+      </div>
+    </div>
+
+  </div><!-- /semanal -->
+
+
+  <!-- ──────── MENSAL ──────── -->
+  <div class="period-view" id="view-mensal">
+
+    <div class="kpi-grid" id="kpis-mensal"></div>
+
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">Google Ads — Conversões Mensais</div>
+        <div class="chart-subtitle">Leads gerados por mês · 6 meses</div>
+        <canvas id="chart-conversoes-monthly" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Google Ads — Investimento Mensal (R$)</div>
+        <div class="chart-subtitle">Custo total investido no Google Ads por mês</div>
+        <canvas id="chart-custo-monthly" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">CPL Mensal — Evolução</div>
+        <div class="chart-subtitle">Custo por lead · Benchmark B2B: R$80–200</div>
+        <canvas id="chart-cpl-monthly" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Impressões & Cliques Mensais</div>
+        <div class="chart-subtitle">Volume de tráfego pago por mês</div>
+        <canvas id="chart-impr-monthly" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Insight box -->
+    <div class="insight-box">
+      <h3>💡 Análise Mensal — So What?</h3>
+      <div class="insight-item">
+        <span class="insight-icon">📈</span>
+        <span><strong>Março foi o melhor mês</strong> em conversões (12 leads, CPL R$233). Tendência positiva MoM desde novembro.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">⚠️</span>
+        <span><strong>Campanha única ativa limitada pelo orçamento</strong> — 12 das 13 campanhas estão pausadas. Isso limita o volume de conversões possível. Recomenda-se reativar pelo menos mais 2 campanhas.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">🎯</span>
+        <span><strong>CPL ainda fora do benchmark B2B</strong> (R$233 vs meta R$80–200). Otimizar Quality Score das palavras-chave pode reduzir custo por clique.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">🔴</span>
+        <span><strong>GA4 não instalado</strong> — sem dados de comportamento no site. Isso impede a análise completa do funil. Instalar tag G-R8SYSRZFFW é prioridade crítica.</span>
+      </div>
+    </div>
+
+  </div><!-- /mensal -->
+
+
+  <!-- ──────── ORGÂNICO / SEO ──────── -->
+  <div class="period-view" id="view-organico">
+
+    <div class="kpi-grid" id="kpis-seo"></div>
+
+    <div class="alert-banner danger">
+      🔴 <strong>740 páginas não indexadas</strong> no Google Search Console — isso limita drasticamente o tráfego orgânico do blog. Auditoria técnica urgente necessária.
+    </div>
+
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">Search Console — Cliques Orgânicos (7 semanas)</div>
+        <div class="chart-subtitle">Cliques via busca orgânica no Google</div>
+        <canvas id="chart-cliques-organic" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">CTR Orgânico (7 semanas)</div>
+        <div class="chart-subtitle">Taxa de clique · Benchmark: 3–5% para B2B</div>
+        <canvas id="chart-ctr-organic" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Top Keywords -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">🔑 Top Keywords Orgânicas (7 dias)</div>
+      </div>
+      <div class="chart-card">
+        <table class="data-table" id="table-keywords"></table>
+      </div>
+    </div>
+
+    <div class="grid-2 section">
+      <div class="insight-box">
+        <h3>🔍 Status de Indexação</h3>
+        <div class="insight-item">
+          <span class="insight-icon">✅</span>
+          <span>Domínio imma.net.br verificado no Search Console</span>
+        </div>
+        <div class="insight-item">
+          <span class="insight-icon">🚨</span>
+          <span><strong>740 páginas com erro de indexação</strong> — revisar via Search Console → Cobertura → Excluídas</span>
+        </div>
+        <div class="insight-item">
+          <span class="insight-icon">🚨</span>
+          <span><strong>GA4 não instalado</strong> — instalar tag G-R8SYSRZFFW em imma.net.br com urgência</span>
+        </div>
+        <div class="insight-item">
+          <span class="insight-icon">📍</span>
+          <span>"imma experiências" ranqueando #1 na busca orgânica</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Posição Média — Evolução</div>
+        <div class="chart-subtitle">Quanto menor o número, melhor. Benchmark: abaixo de 10</div>
+        <canvas id="chart-posicao" height="200"></canvas>
+      </div>
+    </div>
+
+  </div><!-- /organico -->
+
+
+  <!-- ──────── SOCIAL ──────── -->
+  <div class="period-view" id="view-social">
+
+    <div class="kpi-grid" id="kpis-social"></div>
+
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title">LinkedIn — Crescimento de Seguidores</div>
+        <div class="chart-subtitle">Seguidores por semana (últimas 6 semanas)</div>
+        <canvas id="chart-linkedin-seguidores" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">LinkedIn vs. Benchmark B2B — Engajamento (%)</div>
+        <div class="chart-subtitle">Taxa de engajamento média · Benchmark B2B: 3,5%</div>
+        <canvas id="chart-linkedin-eng-bench" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Meta Ads Alert -->
+    <div class="alert-banner info">
+      ℹ️ <strong>Meta Ads:</strong> Nenhuma campanha ativa nos últimos 60 dias. Investimento = R$0. Canal com potencial não aproveitado para geração de leads B2B.
+    </div>
+
+    <!-- Social tables -->
+    <div class="grid-2 section">
+      <div class="chart-card">
+        <div class="chart-title" style="margin-bottom:16px">💼 LinkedIn — Posts Recentes</div>
+        <table class="data-table" id="table-linkedin-social"></table>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title" style="margin-bottom:16px">📸 Instagram — Posts Recentes</div>
+        <table class="data-table" id="table-instagram"></table>
+      </div>
+    </div>
+
+  </div><!-- /social -->
+
+
+  <!-- ──────── LINKEDIN ADS ──────── -->
+  <div class="period-view" id="view-linkedin-ads">
+
+    <div class="kpi-grid" id="kpis-linkedin-ads"></div>
+
+    <div id="linkedin-ads-no-data" class="alert-banner info" style="display:none">
+      ℹ️ <strong>LinkedIn Ads ainda não conectado.</strong> Os dados serão preenchidos pelo agente após a primeira coleta via Campaign Manager (business.linkedin.com/marketing-solutions).
+    </div>
+
+    <div id="linkedin-ads-charts">
+      <div class="grid-2 section">
+        <div class="chart-card">
+          <div class="chart-title">LinkedIn Ads — Leads gerados (semanas)</div>
+          <div class="chart-subtitle">Número de leads por semana via LinkedIn Campaign Manager</div>
+          <canvas id="chart-li-leads" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">LinkedIn Ads — CPL (semanas)</div>
+          <div class="chart-subtitle">Custo por lead · Benchmark B2B LinkedIn: R$150–400</div>
+          <canvas id="chart-li-cpl" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2 section">
+        <div class="chart-card">
+          <div class="chart-title">LinkedIn Ads — Investimento semanal (R$)</div>
+          <div class="chart-subtitle">Custo total por semana</div>
+          <canvas id="chart-li-custo" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">LinkedIn Ads — CTR (%)</div>
+          <div class="chart-subtitle">Taxa de clique · Benchmark LinkedIn B2B: 0,4–0,9%</div>
+          <canvas id="chart-li-ctr" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📋 Campanhas LinkedIn Ads</div>
+        </div>
+        <div class="chart-card">
+          <table class="data-table" id="table-li-campanhas"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:16px">
+      <h3>💡 LinkedIn Ads — Por que é importante para a IMMA?</h3>
+      <div class="insight-item">
+        <span class="insight-icon">🎯</span>
+        <span><strong>Segmentação por cargo e setor:</strong> LinkedIn permite segmentar exatamente gestores de RH e diretores de pessoas — o ICP perfeito da IMMA.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">📊</span>
+        <span><strong>Benchmark B2B LinkedIn:</strong> CPL R$150–400, CTR 0,4–0,9%, conversão de lead 2–5%. Mais caro que Google, mas lead mais qualificado.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">🔧</span>
+        <span><strong>Para conectar:</strong> acesse Campaign Manager → Relatórios → selecionar "Últimos 7 dias" → exportar métricas de investimento, impressões, cliques, leads e CPL.</span>
+      </div>
+    </div>
+
+  </div><!-- /linkedin-ads -->
+
+
+  <!-- ──────── ALERTAS ──────── -->
+  <div class="period-view" id="view-alertas">
+
+    <div style="margin-bottom:24px">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:6px">⚠️ Alertas e Ações Prioritárias</h2>
+      <p style="font-size:13px;color:var(--text-muted)">Situações que requerem ação imediata ou atenção esta semana</p>
+    </div>
+
+    <div class="section">
+      <div class="chart-card">
+        <table class="data-table" id="table-alertas"></table>
+      </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:24px">
+      <h3>📋 Plano de Ação Recomendado</h3>
+      <div class="insight-item">
+        <span class="insight-icon">1️⃣</span>
+        <span><strong>[CRÍTICO] Instalar GA4</strong> — tag G-R8SYSRZFFW em imma.net.br. Sem isso, nenhum dado de comportamento no site é coletado.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">2️⃣</span>
+        <span><strong>[CRÍTICO] Aumentar orçamento do Google Ads</strong> — campanha limitada a R$85/dia. Aumentar para R$150–200/dia pode dobrar conversões semanais.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">3️⃣</span>
+        <span><strong>[ALTO] Corrigir 740 páginas não indexadas</strong> no Search Console — isso limita o tráfego orgânico e o ranqueamento do blog.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">4️⃣</span>
+        <span><strong>[ALTO] Reativar campanhas no Meta Ads</strong> — canal com zero investimento há 60 dias. Teste com R$30–50/dia para geração de leads B2B.</span>
+      </div>
+      <div class="insight-item">
+        <span class="insight-icon">5️⃣</span>
+        <span><strong>[MÉDIO] Otimizar CTR orgânico</strong> — 2,7% está abaixo do benchmark (3–5%). Testar novos títulos e meta descriptions nos artigos do blog.</span>
+      </div>
+    </div>
+
+  </div><!-- /alertas -->
+
+  <div class="update-note" id="update-note"></div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════
+
+const D = IMMA_DATA;
+const charts = {};
+
+function fmt(n, decimals=0, prefix='') {
+  if (n == null) return '—';
+  return prefix + n.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtR(n) { return fmt(n, 2, 'R$ '); }
+function delta(val, prev, lowerIsBetter=false) {
+  if (!prev) return '';
+  const diff = val - prev;
+  const pct = ((diff / prev) * 100).toFixed(1);
+  const up = diff > 0;
+  const good = lowerIsBetter ? !up : up;
+  return `<span class="kpi-delta ${good ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span>`;
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Header
+  const dt = new Date(D.lastUpdated);
+  document.getElementById('last-updated').textContent = 'Atualizado: ' + dt.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  document.getElementById('report-period').textContent = D.reportPeriod;
+  document.getElementById('update-note').textContent = 'Dashboard atualizado automaticamente pelos agentes agendados · Última coleta: ' + dt.toLocaleDateString('pt-BR');
+
+  renderSemanal();
+  renderMensal();
+  renderOrganico();
+  renderSocial();
+  renderLinkedinAds();
+  renderAlertas();
+});
+
+// ══════════════════════════
+// SEMANAL
+// ══════════════════════════
+function renderSemanal() {
+  const w = D.googleAds.weekly;
+  const cur = w[w.length - 1];
+  const prev = w[w.length - 2];
+  const li = D.linkedin;
+
+  const la = D.linkedinAds;
+  const laHasData = la.weekly && la.weekly.some(w => w.leads !== null);
+  const laCur = laHasData ? la.weekly[la.weekly.length - 1] : null;
+
+  // KPIs
+  const kpis = [
+    // — Google Ads —
+    { label: 'Leads Google Ads (7d)', value: cur.conversoes, sub: 'via Search Ads', delta: delta(cur.conversoes, prev.conversoes), cls: 'green' },
+    { label: 'CPL Google Ads', value: fmtR(cur.cpl), sub: 'benchmark: R$80–200', delta: delta(cur.cpl, prev.cpl, true), cls: '' },
+    { label: 'Invest. Google Ads', value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: delta(cur.custo, prev.custo, true), cls: 'blue' },
+    // — LinkedIn Ads —
+    { label: 'Leads LinkedIn Ads (7d)', value: laHasData && laCur.leads != null ? laCur.leads : '—', sub: laHasData ? 'via Campaign Manager' : 'aguardando coleta', delta: '', cls: 'green' },
+    { label: 'CPL LinkedIn Ads', value: laHasData && laCur.cpl != null ? fmtR(laCur.cpl) : '—', sub: 'benchmark: R$150–400', delta: '', cls: '' },
+    { label: 'Invest. LinkedIn Ads', value: laHasData && laCur.investimento != null ? fmtR(laCur.investimento) : '—', sub: laHasData ? `${laCur.cliques ?? '—'} cliques` : 'aguardando coleta', delta: '', cls: 'blue' },
+    // — Orgânico & Social —
+    { label: 'Engaj. LinkedIn Orgânico', value: li.engajamentoMedio + '%', sub: `benchmark B2B: ${li.benchmarkB2B}%`, delta: '', cls: 'orange' },
+    { label: 'Cliques Orgânicos (GSC)', value: fmt(D.searchConsole.cliques), sub: `Google Search Console · CTR ${D.searchConsole.ctr}%`, delta: '', cls: 'purple' },
+  ];
+  document.getElementById('kpis-semanal').innerHTML = kpis.map(k =>
+    `<div class="kpi-card ${k.cls}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      ${k.delta}
+    </div>`).join('');
+
+  // Chart: conversões weekly
+  const weeks = w.map(x => x.week);
+  buildBarChart('chart-conversoes-weekly', weeks, [{
+    label: 'Conversões', data: w.map(x => x.conversoes),
+    backgroundColor: w.map((x,i) => i === w.length-1 ? '#e94560' : 'rgba(233,69,96,0.3)'),
+    borderRadius: 6
+  }], { suggestedMax: 8 });
+
+  // Chart: CPL weekly
+  buildLineChart('chart-cpl-weekly', weeks,
+    [{ label: 'CPL (R$)', data: w.map(x => x.cpl), borderColor: '#e94560', tension: 0.3 }],
+    { annotations: [{ value: 200, label: 'Benchmark R$200', color: 'red' }] }
+  );
+
+  // Chart: custo & cliques
+  buildMixedChart('chart-custo-cliques', weeks,
+    w.map(x => x.custo), w.map(x => x.cliques));
+
+  // Chart: LinkedIn organic engagement
+  const liw = D.linkedin.weekly;
+  buildLineChart('chart-linkedin-weekly', liw.map(x => x.week),
+    [
+      { label: 'Engajamento (%)', data: liw.map(x => x.engajamento), borderColor: '#0077b5', tension: 0.3 },
+      { label: 'Benchmark B2B 3,5%', data: liw.map(() => 3.5), borderColor: '#e74c3c', borderDash: [6,4], fill: false }
+    ]
+  );
+
+  // Chart: comparativo investimento Google Ads vs LinkedIn Ads
+  const gWeeks = w.map(x => x.week);
+  const laWeeklyMap = {};
+  if (la.weekly) la.weekly.forEach(x => { laWeeklyMap[x.week] = x; });
+  buildBarChart('chart-invest-comparativo', gWeeks, [
+    {
+      label: 'Google Ads (R$)',
+      data: w.map(x => x.custo),
+      backgroundColor: 'rgba(233,69,96,0.7)',
+      borderRadius: 4
+    },
+    {
+      label: 'LinkedIn Ads (R$)',
+      data: w.map(x => (laWeeklyMap[x.week] && laWeeklyMap[x.week].investimento != null) ? laWeeklyMap[x.week].investimento : 0),
+      backgroundColor: 'rgba(0,119,181,0.7)',
+      borderRadius: 4
+    }
+  ]);
+
+  // Chart: comparativo leads Google Ads vs LinkedIn Ads
+  buildBarChart('chart-leads-comparativo', gWeeks, [
+    {
+      label: 'Leads Google Ads',
+      data: w.map(x => x.conversoes),
+      backgroundColor: 'rgba(233,69,96,0.7)',
+      borderRadius: 4
+    },
+    {
+      label: 'Leads LinkedIn Ads',
+      data: w.map(x => (laWeeklyMap[x.week] && laWeeklyMap[x.week].leads != null) ? laWeeklyMap[x.week].leads : 0),
+      backgroundColor: 'rgba(0,119,181,0.7)',
+      borderRadius: 4
+    }
+  ]);
+
+  // Table campanhas
+  document.getElementById('table-campanhas').innerHTML = `
+    <thead><tr><th>Campanha</th><th>Orçamento/dia</th><th>Status</th><th>Tipo</th><th>Score</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>${D.googleAds.activeCampaignName}</strong></td>
+        <td>${fmtR(D.googleAds.activeCampaignBudget)}</td>
+        <td><span class="pill pill-orange">⚠ ${D.googleAds.activeCampaignStatus}</span></td>
+        <td>${D.googleAds.activeCampaignType}</td>
+        <td>${D.googleAds.activeCampaignScore}%</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text-muted)">+ 12 campanhas pausadas</td>
+        <td>—</td>
+        <td><span class="pill pill-gray">Pausada</span></td>
+        <td>Search / Display / Smart</td>
+        <td>—</td>
+      </tr>
+    </tbody>`;
+
+  // Table LinkedIn
+  document.getElementById('table-linkedin').innerHTML = `
+    <thead><tr><th>Post</th><th>Data</th><th>Tipo</th><th>Alcance</th><th>Engajamento</th></tr></thead>
+    <tbody>${D.linkedin.postsRecentes.map((p, i) =>
+      `<tr>
+        <td><strong>${i+1}. ${p.titulo}</strong></td>
+        <td>${p.data}</td>
+        <td><span class="pill pill-gray">${p.tipo}</span></td>
+        <td>${fmt(p.alcance)}</td>
+        <td><strong style="color:${p.engajamento > 10 ? '#155724' : '#495057'}">${p.engajamento}%</strong></td>
+      </tr>`
+    ).join('')}</tbody>`;
+}
+
+// ══════════════════════════
+// MENSAL
+// ══════════════════════════
+function renderMensal() {
+  const m = D.googleAds.monthly;
+  const cur = m[m.length - 2]; // março (mês completo)
+  const prev = m[m.length - 3]; // fevereiro
+  const months = m.map(x => x.month);
+
+  document.getElementById('kpis-mensal').innerHTML = [
+    { label: 'Conversões — Março', value: cur.conversoes, sub: 'leads Google Ads', delta: delta(cur.conversoes, prev.conversoes), cls: 'green' },
+    { label: 'CPL Março', value: fmtR(cur.cpl), sub: 'custo por lead', delta: delta(cur.cpl, prev.cpl, true), cls: '' },
+    { label: 'Investimento Março', value: fmtR(cur.custo), sub: `${cur.cliques} cliques`, delta: '', cls: 'blue' },
+    { label: 'Impressões Março', value: fmt(cur.impressoes), sub: `CTR ${((cur.cliques/cur.impressoes)*100).toFixed(1)}%`, delta: '', cls: 'purple' },
+  ].map(k => `<div class="kpi-card ${k.cls}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>
+    ${k.delta}
+  </div>`).join('');
+
+  buildBarChart('chart-conversoes-monthly', months, [{
+    label: 'Conversões', data: m.map(x => x.conversoes),
+    backgroundColor: m.map((x,i) => i === m.length-2 ? '#e94560' : 'rgba(233,69,96,0.35)'),
+    borderRadius: 6
+  }]);
+
+  buildBarChart('chart-custo-monthly', months, [{
+    label: 'Investimento (R$)', data: m.map(x => x.custo),
+    backgroundColor: m.map((x,i) => i === m.length-2 ? '#0f3460' : 'rgba(15,52,96,0.35)'),
+    borderRadius: 6
+  }]);
+
+  buildLineChart('chart-cpl-monthly', months,
+    [
+      { label: 'CPL (R$)', data: m.map(x => x.cpl), borderColor: '#533483', tension: 0.3 },
+      { label: 'Benchmark R$200', data: m.map(() => 200), borderColor: '#e74c3c', borderDash: [6,4], fill: false }
+    ]
+  );
+
+  buildMixedChart('chart-impr-monthly', months, m.map(x => x.impressoes), m.map(x => x.cliques), 'Impressões', 'Cliques');
+}
+
+// ══════════════════════════
+// ORGÂNICO / SEO
+// ══════════════════════════
+function renderOrganico() {
+  const sc = D.searchConsole;
+
+  document.getElementById('kpis-seo').innerHTML = [
+    { label: 'Cliques Orgânicos (7d)', value: fmt(sc.cliques), sub: `vs. semana anterior`, cls: 'green' },
+    { label: 'Impressões (7d)', value: fmt(sc.impressoes), sub: 'no Google Search', cls: 'blue' },
+    { label: 'CTR Médio', value: sc.ctr + '%', sub: 'benchmark B2B: 3–5%', cls: '' },
+    { label: 'Posição Média', value: sc.posicaoMedia, sub: 'benchmark: < 10', cls: 'purple' },
+    { label: 'Páginas não indexadas', value: fmt(sc.paginasNaoIndexadas), sub: '⚠ Ação urgente', cls: '' },
+  ].map(k => `<div class="kpi-card ${k.cls}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>
+  </div>`).join('');
+
+  const scw = sc.weekly;
+  buildLineChart('chart-cliques-organic', scw.map(x => x.week),
+    [{ label: 'Cliques orgânicos', data: scw.map(x => x.cliques), borderColor: '#27ae60', tension: 0.3 }]);
+
+  buildLineChart('chart-ctr-organic', scw.map(x => x.week),
+    [
+      { label: 'CTR (%)', data: scw.map(x => x.ctr), borderColor: '#0f3460', tension: 0.3 },
+      { label: 'Benchmark 3%', data: scw.map(() => 3), borderColor: '#e74c3c', borderDash: [6,4], fill: false }
+    ]
+  );
+
+  buildLineChart('chart-posicao', scw.map(x => x.week),
+    [{ label: 'Posição média', data: scw.map(x => x.posicao), borderColor: '#533483', tension: 0.3 }],
+    { reverse: true }
+  );
+
+  document.getElementById('table-keywords').innerHTML = `
+    <thead><tr><th>Palavra-chave</th><th>Cliques (7d)</th><th>Posição média</th><th>Status</th></tr></thead>
+    <tbody>${sc.topKeywords.map(k =>
+      `<tr>
+        <td><strong>${k.keyword}</strong></td>
+        <td>${k.cliques}</td>
+        <td>${k.posicao}</td>
+        <td><span class="pill ${k.posicao < 5 ? 'pill-green' : k.posicao < 10 ? 'pill-orange' : 'pill-red'}">${k.posicao < 5 ? 'Top 5' : k.posicao < 10 ? 'Pág 1' : 'Pág 2+'}</span></td>
+      </tr>`
+    ).join('')}</tbody>`;
+}
+
+// ══════════════════════════
+// SOCIAL
+// ══════════════════════════
+function renderSocial() {
+  const li = D.linkedin;
+  const ig = D.instagram;
+
+  document.getElementById('kpis-social').innerHTML = [
+    { label: 'Seguidores LinkedIn', value: fmt(li.seguidores.end), sub: `+${li.seguidores.growth} em 15 dias`, cls: 'blue' },
+    { label: 'Engaj. Médio LinkedIn', value: li.engajamentoMedio + '%', sub: `benchmark B2B: ${li.benchmarkB2B}%`, cls: 'green' },
+    { label: 'Seguidores Instagram', value: fmt(ig.seguidores), sub: ig.crescimento, cls: 'purple' },
+    { label: 'Engaj. Médio Instagram', value: ig.engajamentoMedio + '%', sub: 'benchmark: 3–6%', cls: 'orange' },
+    { label: 'Meta Ads', value: 'R$ 0', sub: D.metaAds.nota, cls: '' },
+  ].map(k => `<div class="kpi-card ${k.cls}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>
+  </div>`).join('');
+
+  const liw = li.weekly;
+  buildLineChart('chart-linkedin-seguidores', liw.map(x => x.week),
+    [{ label: 'Seguidores', data: liw.map(x => x.seguidores), borderColor: '#0077b5', tension: 0.3, fill: true, backgroundColor: 'rgba(0,119,181,0.08)' }]);
+
+  buildLineChart('chart-linkedin-eng-bench', liw.map(x => x.week),
+    [
+      { label: 'Engajamento (%)', data: liw.map(x => x.engajamento), borderColor: '#0077b5', tension: 0.3 },
+      { label: 'Benchmark B2B 3,5%', data: liw.map(() => 3.5), borderColor: '#e74c3c', borderDash: [6,4] }
+    ]
+  );
+
+  document.getElementById('table-linkedin-social').innerHTML = `
+    <thead><tr><th>Post</th><th>Alcance</th><th>Engajamento</th><th>Tipo</th></tr></thead>
+    <tbody>${li.postsRecentes.map(p =>
+      `<tr>
+        <td>${p.titulo}</td>
+        <td>${fmt(p.alcance)}</td>
+        <td><strong style="color:${p.engajamento > 10 ? '#155724' : '#495057'}">${p.engajamento}%</strong></td>
+        <td><span class="pill pill-gray">${p.tipo}</span></td>
+      </tr>`
+    ).join('')}</tbody>`;
+
+  document.getElementById('table-instagram').innerHTML = `
+    <thead><tr><th>Post</th><th>Alcance</th><th>Engajamento</th></tr></thead>
+    <tbody>${ig.postsRecentes.map(p =>
+      `<tr>
+        <td>${p.titulo}</td>
+        <td>${fmt(p.alcance)}</td>
+        <td><strong>${p.engajamento}%</strong></td>
+      </tr>`
+    ).join('')}
+    <tr><td colspan="3" style="color:var(--text-muted);font-style:italic">Dados coletados via Instagram Insights</td></tr>
+    </tbody>`;
+}
+
+// ══════════════════════════
+// ALERTAS
+// ══════════════════════════
+// ══════════════════════════
+// LINKEDIN ADS
+// ══════════════════════════
+function renderLinkedinAds() {
+  const la = D.linkedinAds;
+  const hasData = la.weekly && la.weekly.some(w => w.leads !== null);
+
+  // Sempre mostra a estrutura — com dados reais ou com "—"
+  document.getElementById('linkedin-ads-no-data').style.display = hasData ? 'none' : 'flex';
+  document.getElementById('linkedin-ads-charts').style.display = 'block';
+
+  const cur = hasData ? la.weekly[la.weekly.length - 1] : null;
+  const prev = hasData && la.weekly.length > 1 ? la.weekly[la.weekly.length - 2] : null;
+
+  const v = (field) => cur && cur[field] != null ? cur[field] : null;
+
+  document.getElementById('kpis-linkedin-ads').innerHTML = [
+    { label: 'Investimento (7d)', value: v('investimento') != null ? fmtR(v('investimento')) : '—', sub: hasData ? 'LinkedIn Ads' : 'aguardando coleta', cls: 'blue' },
+    { label: 'Leads (7d)', value: v('leads') != null ? v('leads') : '—', sub: hasData ? 'via Campaign Manager' : 'aguardando coleta', cls: 'green' },
+    { label: 'CPL', value: v('cpl') != null ? fmtR(v('cpl')) : '—', sub: 'benchmark: R$150–400', cls: '' },
+    { label: 'Cliques', value: v('cliques') != null ? fmt(v('cliques')) : '—', sub: `CTR ${v('ctr') != null ? v('ctr')+'%' : '—'}`, cls: 'purple' },
+    { label: 'Impressões', value: v('impressoes') != null ? fmt(v('impressoes')) : '—', sub: 'últimos 7 dias', cls: '' },
+  ].map(k => `<div class="kpi-card ${k.cls}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value" style="${!hasData ? 'color:var(--text-muted)' : ''}">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>
+  </div>`).join('');
+
+  // Usar semanas do Google Ads como eixo X base quando não há histórico LinkedIn
+  const baseWeeks = hasData ? la.weekly.map(w => w.week) : D.googleAds.weekly.map(w => w.week);
+  const laMap = {};
+  if (la.weekly) la.weekly.forEach(x => { laMap[x.week] = x; });
+
+  buildBarChart('chart-li-leads', baseWeeks, [{
+    label: 'Leads', data: baseWeeks.map(wk => (laMap[wk] && laMap[wk].leads != null) ? laMap[wk].leads : 0),
+    backgroundColor: baseWeeks.map((wk,i) => i === baseWeeks.length-1 ? '#0077b5' : 'rgba(0,119,181,0.3)'),
+    borderRadius: 6
+  }]);
+  buildLineChart('chart-li-cpl', baseWeeks,
+    [{ label: 'CPL (R$)', data: baseWeeks.map(wk => laMap[wk] ? laMap[wk].cpl : null), borderColor: '#0077b5', tension: 0.3 }]);
+  buildBarChart('chart-li-custo', baseWeeks, [{
+    label: 'Investimento (R$)', data: baseWeeks.map(wk => (laMap[wk] && laMap[wk].investimento != null) ? laMap[wk].investimento : 0),
+    backgroundColor: baseWeeks.map((wk,i) => i === baseWeeks.length-1 ? '#0f3460' : 'rgba(15,52,96,0.3)'),
+    borderRadius: 6
+  }]);
+  buildLineChart('chart-li-ctr', baseWeeks,
+    [
+      { label: 'CTR (%)', data: baseWeeks.map(wk => laMap[wk] ? laMap[wk].ctr : null), borderColor: '#533483', tension: 0.3 },
+      { label: 'Benchmark 0,6%', data: baseWeeks.map(() => 0.6), borderColor: '#e74c3c', borderDash: [6,4] }
+    ]);
+
+  const rows = la.campanhas && la.campanhas.length > 0
+    ? la.campanhas.map(c => `<tr>
+        <td><strong>${c.nome}</strong></td>
+        <td>${c.tipo || '—'}</td>
+        <td>${c.investimento != null ? 'R$ '+c.investimento.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}</td>
+        <td>${c.leads != null ? c.leads : '—'}</td>
+        <td>${c.cpl != null ? 'R$ '+c.cpl.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}</td>
+        <td><span class="pill ${c.status === 'Ativa' ? 'pill-green' : 'pill-gray'}">${c.status || '—'}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:20px">Nenhuma campanha coletada ainda</td></tr>';
+
+  document.getElementById('table-li-campanhas').innerHTML = `
+    <thead><tr><th>Campanha</th><th>Tipo</th><th>Investimento</th><th>Leads</th><th>CPL</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function renderAlertas() {
+  const alertas = [
+    { nivel: '🚨 Crítico', area: 'Google Ads', alerta: 'Campanha limitada pelo orçamento (R$85/dia)', acao: 'Aumentar orçamento para R$150–200/dia', impacto: 'Alto' },
+    { nivel: '🚨 Crítico', area: 'GA4', alerta: 'Tag G-R8SYSRZFFW não instalada em imma.net.br', acao: 'Instalar pixel GA4 no site — sem isso sem dados de comportamento', impacto: 'Crítico' },
+    { nivel: '⚠ Alto', area: 'SEO', alerta: '740 páginas não indexadas no Google', acao: 'Auditoria técnica em Search Console → Cobertura → Excluídas', impacto: 'Alto' },
+    { nivel: '⚠ Alto', area: 'Meta Ads', alerta: 'Nenhuma campanha ativa há 60+ dias', acao: 'Criar campanha de geração de leads com R$30–50/dia', impacto: 'Alto' },
+    { nivel: '⚠ Médio', area: 'Google Ads', alerta: 'CPL R$294 esta semana (acima de R$200)', acao: 'Otimizar Quality Score e ajustar lances por conversão', impacto: 'Médio' },
+    { nivel: '⚠ Médio', area: 'SEO/Blog', alerta: 'CTR orgânico 2,7% (abaixo de 3%)', acao: 'Revisar títulos e meta descriptions dos artigos do blog', impacto: 'Médio' },
+    { nivel: 'ℹ Info', area: 'RD Station', alerta: 'Dados não coletados (erro 502)', acao: 'Tentar novamente na próxima rodada do agente', impacto: 'Baixo' },
+  ];
+
+  document.getElementById('table-alertas').innerHTML = `
+    <thead><tr><th>Nível</th><th>Área</th><th>Alerta</th><th>Ação Recomendada</th><th>Impacto</th></tr></thead>
+    <tbody>${alertas.map(a =>
+      `<tr>
+        <td>${a.nivel}</td>
+        <td><strong>${a.area}</strong></td>
+        <td>${a.alerta}</td>
+        <td>${a.acao}</td>
+        <td><span class="pill ${a.impacto === 'Crítico' ? 'pill-red' : a.impacto === 'Alto' ? 'pill-orange' : a.impacto === 'Médio' ? 'pill-gray' : 'pill-gray'}">${a.impacto}</span></td>
+      </tr>`
+    ).join('')}</tbody>`;
+}
+
+// ══════════════════════════
+// CHART HELPERS
+// ══════════════════════════
+function buildBarChart(id, labels, datasets, opts = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: datasets.length > 1 } },
+      scales: {
+        y: { beginAtZero: true, suggestedMax: opts.suggestedMax,
+          grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function buildLineChart(id, labels, datasets, opts = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  const processedDatasets = datasets.map(ds => ({
+    ...ds,
+    borderWidth: 2.5,
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    fill: ds.fill !== undefined ? ds.fill : false,
+    borderDash: ds.borderDash || [],
+  }));
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: processedDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: datasets.length > 1, labels: { font: { size: 11 } } } },
+      scales: {
+        y: {
+          reverse: opts.reverse || false,
+          grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function buildMixedChart(id, labels, barData, lineData, barLabel = 'Custo (R$)', lineLabel = 'Cliques') {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar', label: barLabel, data: barData,
+          backgroundColor: 'rgba(15,52,96,0.3)', borderColor: '#0f3460',
+          borderRadius: 5, yAxisID: 'y'
+        },
+        {
+          type: 'line', label: lineLabel, data: lineData,
+          borderColor: '#e94560', borderWidth: 2.5,
+          pointRadius: 4, tension: 0.3, yAxisID: 'y2'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { font: { size: 11 } } } },
+      scales: {
+        y: { position: 'left', grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
+        y2: { position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════
+// PERIOD TABS
+// ══════════════════════════
+function showPeriod(name, btn) {
+  document.querySelectorAll('.period-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>
