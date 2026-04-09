@@ -1131,10 +1131,21 @@ function renderSocial(weekIdx) {
   const idx = Math.min(weekIdx ?? currentWeekIdx, liw.length - 1);
   const wkLi = liw[idx];
 
+  const liSeg = wkLi?.seguidores != null ? fmt(wkLi.seguidores) : '—';
+  const liEng = wkLi?.engajamento != null ? wkLi.engajamento + '%' : '—';
+  const liAlc = wkLi?.alcance != null ? fmt(wkLi.alcance) : '—';
+  const liNovos = wkLi?.novosSeguidores != null ? '+' + wkLi.novosSeguidores : '—';
+  const liImp = wkLi?.impressoes != null ? fmt(wkLi.impressoes) : '—';
+  const liCurt = wkLi?.curtidas != null ? fmt(wkLi.curtidas) : '—';
+  const igSeg = (() => { const igw = ig.weekly; const igIdx = Math.min(idx, (igw||[]).length-1); return igw?.[igIdx]?.seguidores != null ? fmt(igw[igIdx].seguidores) : ig.seguidores != null ? fmt(ig.seguidores) : '—'; })();
+  const statusBadge = wkLi?.status === 'nao_coletado' ? ' <span style="font-size:10px;color:var(--danger)">● não coletado</span>' : wkLi?.status === 'parcial' ? ' <span style="font-size:10px;color:var(--warning)">● parcial</span>' : '';
+
   document.getElementById('kpis-social').innerHTML = [
-    { label: 'Seguidores LinkedIn', value: fmt(wkLi ? wkLi.seguidores : li.seguidores.end), sub: wkLi ? wkLi.week : `+${li.seguidores.growth} em 15 dias`, cls: 'blue' },
-    { label: 'Engaj. LinkedIn', value: (wkLi ? wkLi.engajamento : li.engajamentoMedio) + '%', sub: `benchmark B2B: ${li.benchmarkB2B}%`, cls: 'green' },
-    { label: 'Seguidores Instagram', value: fmt(ig.seguidores), sub: ig.crescimento, cls: 'purple' },
+    { label: 'Seguidores LinkedIn' + statusBadge, value: liSeg, sub: wkLi ? wkLi.week : `+${li.seguidores.growth} em 15 dias`, cls: 'blue' },
+    { label: 'Engaj. LinkedIn', value: liEng, sub: `benchmark B2B: ${li.benchmarkB2B}%`, cls: 'green' },
+    { label: 'Alcance semanal LI', value: liAlc, sub: liImp !== '—' ? `${liImp} impressões` : 'impressões n/d', cls: 'blue' },
+    { label: 'Novos seguidores LI', value: liNovos, sub: liCurt !== '—' ? `${liCurt} curtidas` : 'curtidas n/d', cls: 'green' },
+    { label: 'Seguidores Instagram', value: igSeg, sub: ig.crescimento || 'crescimento n/d', cls: 'purple' },
     { label: 'Engaj. Médio Instagram', value: ig.engajamentoMedio + '%', sub: 'benchmark: 3–6%', cls: 'orange' },
     { label: 'Meta Ads', value: 'R$ 0', sub: D.metaAds.nota, cls: '' },
   ].map(k => `<div class="kpi-card ${k.cls}">
@@ -1144,8 +1155,8 @@ function renderSocial(weekIdx) {
   </div>`).join('');
 
   buildLineChart('chart-linkedin-seguidores', liw.map(x => x.week),
-    [{ label: 'Seguidores', data: liw.map(x => x.seguidores), borderColor: '#0077b5', tension: 0.3, fill: true, backgroundColor: 'rgba(0,119,181,0.08)',
-       pointRadius: liw.map((x,i) => i === idx ? 7 : 3),
+    [{ label: 'Seguidores', data: liw.map(x => x.seguidores), borderColor: '#0077b5', tension: 0.3, fill: true, backgroundColor: 'rgba(0,119,181,0.08)', spanGaps: false,
+       pointRadius: liw.map((x,i) => i === idx ? 7 : (x.seguidores != null ? 3 : 0)),
        pointBackgroundColor: liw.map((x,i) => i === idx ? '#0077b5' : 'rgba(0,119,181,0.4)') }]);
 
   buildLineChart('chart-linkedin-eng-bench', liw.map(x => x.week),

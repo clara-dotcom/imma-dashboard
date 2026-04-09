@@ -83,14 +83,17 @@ const IMMA_DATA = {
     ],
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
+    // Campos: seguidores, engajamento(%), posts, alcance, impressoes, curtidas, novosSeguidores
     weekly: [
-      { week: "24 fev–2 mar", periodo: "2026-02-24", seguidores: 1820, engajamento: 12.1, posts: 2 },
-      { week: "3–9 mar",      periodo: "2026-03-03", seguidores: 1831, engajamento: 15.4, posts: 3 },
-      { week: "10–16 mar",    periodo: "2026-03-10", seguidores: 1842, engajamento: 18.2, posts: 2 },
-      { week: "17–23 mar",    periodo: "2026-03-17", seguidores: 1853, engajamento: 22.5, posts: 3 },
-      { week: "24–30 mar",    periodo: "2026-03-24", seguidores: 1862, engajamento: 19.8, posts: 2 },
-      { week: "31 mar–6 abr", periodo: "2026-03-31", seguidores: 1871, engajamento: 16.7, posts: 2 },
-      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 2056, engajamento: 16.0, posts: 2 }
+      { week: "17–23 fev",    periodo: "2026-02-17", seguidores: null, engajamento: null, posts: null, alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "nao_coletado" },
+      { week: "24 fev–2 mar", periodo: "2026-02-24", seguidores: 1820, engajamento: 12.1, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "3–9 mar",      periodo: "2026-03-03", seguidores: 1831, engajamento: 15.4, posts: 3,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "10–16 mar",    periodo: "2026-03-10", seguidores: 1842, engajamento: 18.2, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "17–23 mar",    periodo: "2026-03-17", seguidores: 1853, engajamento: 22.5, posts: 3,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "24–30 mar",    periodo: "2026-03-24", seguidores: 1862, engajamento: 19.8, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "31 mar–6 abr", periodo: "2026-03-31", seguidores: 1871, engajamento: 16.7, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
+      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 2056, engajamento: 16.0, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" }
+      // PRÓXIMA SEMANA: preencher alcance, impressoes, curtidas, novosSeguidores via LinkedIn Analytics
     ]
   },
 
@@ -143,8 +146,8 @@ const IMMA_DATA = {
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
     weekly: [
-      { week: "31 mar–6 abr", periodo: "2026-03-31", seguidores: 2341, crescimento: 12,   engajamento: 7.5, posts: 2 },
-      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 1302, crescimento: null, engajamento: 7.5, posts: 1 }
+      { week: "31 mar–6 abr", periodo: "2026-03-31", seguidores: null, crescimento: null, engajamento: 7.5, posts: 2, status: "nao_coletado" },
+      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 1302, crescimento: null, engajamento: 7.5, posts: 1, status: "parcial" }
     ]
   },
 
@@ -219,11 +222,11 @@ const IMMA_DATA = {
   // GA4
   // ─────────────────────────────────────────────────────
   ga4: {
-    status: "nao_instalado",
+    status: "instalado",
     tagId:  "G-R8SYSRZFFW",
-    nota:   "GA4 configurado mas pixel não instalado em imma.net.br",
+    nota:   "GA4 instalado em imma.net.br — coleta iniciará na próxima rodada",
 
-    // Será preenchido após instalação da tag
+    // Será preenchido a partir da próxima coleta
     weekly: []
   },
 
@@ -258,9 +261,9 @@ const IMMA_DATA = {
         instagram:    "parcial — 1.302 seguidores (perfil); insights não coletados",
         metaAds:      "sem_campanhas — R$0 investido",
         rdStation:    "nao_coletado",
-        ga4:          "nao_instalado"
+        ga4:          "instalado — coleta inicia na próxima rodada"
       },
-      notas: "LinkedIn page slug 'immaexperiencias' indisponível — acessada via ID numérico 1210891. Instagram seguidores diverge de Rodada 1 (possível dado inicial estimado). RD Station não tentado nesta rodada."
+      notas: "LinkedIn page slug 'immaexperiencias' indisponível — acessada via ID numérico 1210891. Instagram seguidores 2341 (Rodada 1) corrigido para null (sem verificação histórica). GA4 confirmado instalado. RD Station não tentado nesta rodada."
     }
     // PRÓXIMA RODADA: { data: "2026-04-14", agente: "imma-relatorio-metricas", rodada: 3, ... }
   ]
