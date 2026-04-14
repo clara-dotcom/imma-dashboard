@@ -6,7 +6,7 @@
   <title>IMMA — Dashboard de Marketing</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- Dados históricos — atualizado pelos agentes agendados -->
-  <script src="dashboard-data.js?v=3"></script>
+  <script src="dashboard-data.js?v=4"></script>
   <style>
     :root {
       --primary: #1a1a2e;
@@ -434,7 +434,7 @@
       🚨 <strong>Google Ads limitada pelo orçamento</strong> — campanha "11/02/26 | LEADS" atingiu limite de R$85/dia. Considera aumentar para maximizar conversões.
     </div>
     <div class="alert-banner">
-      ⚠️ <strong>CPL R$294</strong> esta semana — acima da média mensal de março (R$233). Meta B2B saudável: R$80–200.
+      ⚠️ <strong>CPL Google Ads R$591</strong> esta semana (1 conversão) · LinkedIn Ads R$69,71 (2 leads) · Combinado R$244. Meta B2B saudável: R$80–200.
     </div>
 
     <!-- KPIs Semana -->
@@ -574,7 +574,7 @@
     <div class="kpi-grid" id="kpis-seo"></div>
 
     <div class="alert-banner danger">
-      🔴 <strong>740 páginas não indexadas</strong> no Google Search Console — isso limita drasticamente o tráfego orgânico do blog. Auditoria técnica urgente necessária.
+      🔴 <strong>661 páginas não indexadas</strong> no Google Search Console — isso limita drasticamente o tráfego orgânico do blog. Auditoria técnica urgente necessária.
     </div>
 
     <div class="grid-2 section">
@@ -609,7 +609,7 @@
         </div>
         <div class="insight-item">
           <span class="insight-icon">🚨</span>
-          <span><strong>740 páginas com erro de indexação</strong> — revisar via Search Console → Cobertura → Excluídas</span>
+          <span><strong>661 páginas com erro de indexação</strong> — revisar via Search Console → Cobertura → Excluídas</span>
         </div>
         <div class="insight-item">
           <span class="insight-icon">🚨</span>
@@ -759,7 +759,7 @@
       </div>
       <div class="insight-item">
         <span class="insight-icon">3️⃣</span>
-        <span><strong>[ALTO] Corrigir 740 páginas não indexadas</strong> no Search Console — isso limita o tráfego orgânico e o ranqueamento do blog.</span>
+        <span><strong>[ALTO] Corrigir 661 páginas não indexadas</strong> no Search Console — isso limita o tráfego orgânico e o ranqueamento do blog.</span>
       </div>
       <div class="insight-item">
         <span class="insight-icon">4️⃣</span>
@@ -767,7 +767,7 @@
       </div>
       <div class="insight-item">
         <span class="insight-icon">5️⃣</span>
-        <span><strong>[MÉDIO] Otimizar CTR orgânico</strong> — 2,7% está abaixo do benchmark (3–5%). Testar novos títulos e meta descriptions nos artigos do blog.</span>
+        <span><strong>[MÉDIO] Otimizar CTR orgânico</strong> — 1,5% está abaixo do benchmark (3–5%). Investigar queda vs semanas anteriores (~2,7%) e testar novos títulos e meta descriptions.</span>
       </div>
     </div>
 
@@ -1270,12 +1270,12 @@ function renderLinkedinAds(weekIdx) {
 function renderAlertas() {
   const alertas = [
     { nivel: '🚨 Crítico', area: 'Google Ads', alerta: 'Campanha limitada pelo orçamento (R$85/dia)', acao: 'Aumentar orçamento para R$150–200/dia', impacto: 'Alto' },
-    { nivel: '🚨 Crítico', area: 'GA4', alerta: 'Tag G-R8SYSRZFFW não instalada em imma.net.br', acao: 'Instalar pixel GA4 no site — sem isso sem dados de comportamento', impacto: 'Crítico' },
-    { nivel: '⚠ Alto', area: 'SEO', alerta: '740 páginas não indexadas no Google', acao: 'Auditoria técnica em Search Console → Cobertura → Excluídas', impacto: 'Alto' },
+    { nivel: '⚠ Alto', area: 'Google Ads', alerta: 'CPL R$591 esta semana — apenas 1 conversão com R$591,34 investidos', acao: 'Revisar segmentação de palavras-chave e aumentar orçamento diário', impacto: 'Alto' },
+    { nivel: '⚠ Alto', area: 'SEO', alerta: '661 páginas não indexadas no Google', acao: 'Auditoria técnica em Search Console → Cobertura → Excluídas', impacto: 'Alto' },
+    { nivel: '⚠ Alto', area: 'SEO', alerta: 'CTR orgânico caiu para 1,5% (era ~2,7%). Cliques: 96 (vs ~185 semanas anteriores)', acao: 'Investigar queda de cliques e revisar meta descriptions', impacto: 'Alto' },
     { nivel: '⚠ Alto', area: 'Meta Ads', alerta: 'Nenhuma campanha ativa há 60+ dias', acao: 'Criar campanha de geração de leads com R$30–50/dia', impacto: 'Alto' },
-    { nivel: '⚠ Médio', area: 'Google Ads', alerta: 'CPL R$294 esta semana (acima de R$200)', acao: 'Otimizar Quality Score e ajustar lances por conversão', impacto: 'Médio' },
-    { nivel: '⚠ Médio', area: 'SEO/Blog', alerta: 'CTR orgânico 2,7% (abaixo de 3%)', acao: 'Revisar títulos e meta descriptions dos artigos do blog', impacto: 'Médio' },
-    { nivel: 'ℹ Info', area: 'RD Station', alerta: 'Dados não coletados (erro 502)', acao: 'Tentar novamente na próxima rodada do agente', impacto: 'Baixo' },
+    { nivel: '✅ Ok', area: 'GA4', alerta: 'Primeira coleta realizada: 2.934 sessões, 43% engajamento', acao: 'Monitorar tendência nas próximas semanas', impacto: 'Info' },
+    { nivel: 'ℹ Info', area: 'RD Station', alerta: 'Dados não coletados esta rodada', acao: 'Coletar na próxima rodada', impacto: 'Baixo' },
   ];
 
   document.getElementById('table-alertas').innerHTML = `
