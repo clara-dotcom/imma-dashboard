@@ -10,7 +10,7 @@
 // ════════════════════════════════════════════════════════
 
 const IMMA_DATA = {
-  lastUpdated: "2026-04-08T10:00:00",
+  lastUpdated: "2026-04-13T10:00:00",
   reportPeriod: "7–13 abr 2026",
 
   // ─────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ const IMMA_DATA = {
       { week: "17–23 mar",    periodo: "2026-03-17", impressoes: 1980, cliques: 110, custo: 674.00,  conversoes: 3, cpl: 224.67  },
       { week: "24–30 mar",    periodo: "2026-03-24", impressoes: 1567, cliques: 88,  custo: 590.00,  conversoes: 2, cpl: 295.00  },
       { week: "31 mar–6 abr", periodo: "2026-03-31", impressoes: 1538, cliques: 89,  custo: 588.16,  conversoes: 2, cpl: 294.08  },
-      { week: "7–13 abr",    periodo: "2026-04-07", impressoes: 1477, cliques: 94,  custo: 632.20,  conversoes: 2, cpl: 316.10  }
+      { week: "7–13 abr",    periodo: "2026-04-07", impressoes: 1347, cliques: 93,  custo: 591.34,  conversoes: 1, cpl: 591.34, status: "ok" }
       // PRÓXIMA SEMANA: { week: "14–20 abr", periodo: "2026-04-14", ... }
     ],
 
@@ -67,7 +67,7 @@ const IMMA_DATA = {
   // ─────────────────────────────────────────────────────
   linkedin: {
     // SNAPSHOT
-    seguidores:       { start: 1871, end: 2056, growth: 185 },
+    seguidores:       { start: 1871, end: 2057, growth: 186 },
     period:           "Últimos 30 dias",
     engajamentoMedio: 16.0,
     nota:             "Slug immaexperiencias indisponível — page atual via ID 1210891",
@@ -92,7 +92,7 @@ const IMMA_DATA = {
       { week: "17–23 mar",    periodo: "2026-03-17", seguidores: 1853, engajamento: 22.5, posts: 3,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
       { week: "24–30 mar",    periodo: "2026-03-24", seguidores: 1862, engajamento: 19.8, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
       { week: "31 mar–6 abr", periodo: "2026-03-31", seguidores: 1871, engajamento: 16.7, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" },
-      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 2056, engajamento: 16.0, posts: 2,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" }
+      { week: "7–13 abr",    periodo: "2026-04-07", seguidores: 2057, engajamento: null, posts: 0,    alcance: null, impressoes: null, curtidas: null, novosSeguidores: null, status: "parcial" }
       // PRÓXIMA SEMANA: preencher alcance, impressoes, curtidas, novosSeguidores via LinkedIn Analytics
     ]
   },
@@ -102,19 +102,19 @@ const IMMA_DATA = {
   // ─────────────────────────────────────────────────────
   searchConsole: {
     // SNAPSHOT
-    period:              "Últimos 7 dias",
-    cliques:             174,
-    impressoes:          6550,
-    ctr:                 2.7,
-    posicaoMedia:        8.3,
-    paginasNaoIndexadas: 740,
+    period:              "7–13 abr 2026",
+    cliques:             96,
+    impressoes:          6330,
+    ctr:                 1.5,
+    posicaoMedia:        7.3,
+    paginasNaoIndexadas: 661,
 
     topKeywords: [
-      { keyword: "imma experiências",             cliques: 42, posicao: 1.2 },
-      { keyword: "reconhecimento corporativo",    cliques: 28, posicao: 4.1 },
-      { keyword: "premiação colaboradores",       cliques: 19, posicao: 6.3 },
-      { keyword: "felicidade no trabalho empresa",cliques: 14, posicao: 7.8 },
-      { keyword: "employee experience brasil",    cliques: 11, posicao: 9.2 }
+      { keyword: "imma",                          cliques: 54, posicao: 1.0 },
+      { keyword: "imma experiências",             cliques: 13, posicao: 2.0 },
+      { keyword: "imma login",                    cliques: 2,  posicao: 3.0 },
+      { keyword: "immaginare",                    cliques: 1,  posicao: 5.0 },
+      { keyword: "o que é tempo de casa no trabalho", cliques: 1, posicao: 8.0 }
     ],
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
@@ -126,7 +126,8 @@ const IMMA_DATA = {
       { week: "17–23 mar",    periodo: "2026-03-17", cliques: 192, impressoes: 6720, ctr: 2.86, posicao: 8.2 },
       { week: "24–30 mar",    periodo: "2026-03-24", cliques: 179, impressoes: 6580, ctr: 2.72, posicao: 8.3 },
       { week: "31 mar–6 abr", periodo: "2026-03-31", cliques: 185, impressoes: 6760, ctr: 2.74, posicao: 8.2 },
-      { week: "7–13 abr",    periodo: "2026-04-07", cliques: 174, impressoes: 6550, ctr: 2.66, posicao: 8.3 }
+      { week: "7–13 abr",    periodo: "2026-04-07", cliques: 96,  impressoes: 6330, ctr: 1.5,  posicao: 7.3 }
+      // PRÓXIMA SEMANA: { week: "14–20 abr", periodo: "2026-04-14", ... }
     ]
   },
 
@@ -159,12 +160,13 @@ const IMMA_DATA = {
     investimento7d: 0,
     leads7d:        0,
     status:         "Sem campanhas ativas",
-    nota:           "Nenhum anúncio ativo nos últimos 60 dias",
+    nota:           "25 campanhas Completed (impulsionamentos Instagram). Nenhuma campanha de geração de leads ativa.",
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
     weekly: [
       { week: "31 mar–6 abr", periodo: "2026-03-31", investimento: 0, leads: 0, cpl: null, impressoes: 0, cliques: 0 },
-      { week: "7–13 abr",    periodo: "2026-04-07", investimento: 0, leads: 0, cpl: null, impressoes: 0, cliques: 0 }
+      { week: "7–13 abr",    periodo: "2026-04-07", investimento: 0, leads: 0, cpl: null, impressoes: 0, cliques: 0 },
+      { week: "14–20 abr",   periodo: "2026-04-14", investimento: 0, leads: 0, cpl: null, impressoes: 0, cliques: 0 }
     ]
   },
 
@@ -174,32 +176,34 @@ const IMMA_DATA = {
   linkedinAds: {
     // SNAPSHOT — atualizado a cada rodada
     status:         "ok",
-    nota:           "Campanha 'RH - Mensagem' (Sponsored Messaging/InMail) — 0 impressões é normal para este formato",
-    investimento7d: 165.40,
-    leads7d:        1,
+    nota:           "Campanha 'Geração de leads - RH V2' (InMail) gerou 2 leads esta semana. CPL R$69,71 — melhor resultado até agora.",
+    investimento7d: 139.42,
+    leads7d:        2,
     impressoes7d:   0,
     cliques7d:      0,
     ctr7d:          null,
-    cpl7d:          165.40,
-    campanhasAtivas: 1,
+    cpl7d:          69.71,
+    campanhasAtivas: 0,
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
     weekly: [
-      { week: "31 mar–6 abr", periodo: "2026-03-31", investimento: null,   impressoes: null, cliques: null, ctr: null, leads: null, cpl: null,   status: "nao_coletado" },
-      { week: "7–13 abr",    periodo: "2026-04-07", investimento: 165.40, impressoes: 0,    cliques: 0,    ctr: null, leads: 1,    cpl: 165.40, status: "ok" }
+      { week: "31 mar–6 abr", periodo: "2026-03-31", investimento: 165.40, impressoes: 0,    cliques: 0,    ctr: null, leads: 1,    cpl: 165.40, status: "ok" },
+      { week: "7–13 abr",    periodo: "2026-04-07", investimento: 139.42, impressoes: 0,    cliques: 0,    ctr: null, leads: 2,    cpl: 69.71,  status: "ok" }
+      // PRÓXIMA SEMANA: { week: "14–20 abr", periodo: "2026-04-14", ... }
     ],
 
     // HISTÓRICO MENSAL
     monthly: [
       { month: "Mar/26", periodo: "2026-03-01", investimento: null,   impressoes: null, cliques: null, leads: null, cpl: null,   status: "nao_coletado" },
-      { month: "Abr/26", periodo: "2026-04-01", investimento: 165.40, impressoes: 0,    cliques: 0,    leads: 1,    cpl: 165.40, status: "parcial" }
+      { month: "Abr/26", periodo: "2026-04-01", investimento: 304.82, impressoes: 0,    cliques: 0,    leads: 3,    cpl: 101.61, status: "parcial" }
     ],
 
     // Campanhas recentes (substituir a cada rodada)
     campanhas: [
-      { nome: "RH - Mensagem", status: "Ativa", tipo: "Sponsored Messaging (InMail)", objetivo: "Geração de leads" },
-      { nome: "Mega Clientes",         status: "Pausada", tipo: null, objetivo: null },
-      { nome: "Default Campaign Group",status: "Ativa",   tipo: null, objetivo: null }
+      { nome: "Geração de leads - RH V2", status: "Ativa", tipo: "Sponsored Messaging (InMail)", objetivo: "Geração de leads", leads: 2, cpl: 69.71, codigo: "425335224" },
+      { nome: "Reconhecimento por tempo de casa", status: "Ativa", tipo: "Sponsored Messaging (InMail)", objetivo: "Geração de leads", leads: 1, cpl: 165.40 },
+      { nome: "Mega Clientes",                    status: "Pausada", tipo: null, objetivo: null, leads: null, cpl: null },
+      { nome: "Default Campaign Group",           status: "Pausada", tipo: null, objetivo: null, leads: null, cpl: null }
     ]
   },
 
@@ -208,13 +212,14 @@ const IMMA_DATA = {
   // ─────────────────────────────────────────────────────
   rdStation: {
     // SNAPSHOT
-    status: "502 — instabilidade no servidor",
-    nota:   "Dados não coletados nesta rodada",
+    status: "ok",
+    nota:   "Abril 2026: 7 leads (-61%), 2.356 visitantes (+23%), 5 oportunidades. Alerta: 70% capacidade de contatos atingida.",
 
     // HISTÓRICO SEMANAL — agente ADICIONA ao final
     weekly: [
       { week: "31 mar–6 abr", periodo: "2026-03-31", status: "erro_502",     leads: null, mqls: null, abertura_email: null, ctr_email: null },
-      { week: "7–13 abr",    periodo: "2026-04-07", status: "nao_coletado", leads: null, mqls: null, abertura_email: null, ctr_email: null }
+      { week: "7–13 abr",    periodo: "2026-04-07", status: "nao_coletado", leads: null, mqls: null, abertura_email: null, ctr_email: null },
+      { week: "14–20 abr",   periodo: "2026-04-14", status: "ok_parcial",   leads: 7,    mqls: null, abertura_email: null, ctr_email: null }
     ]
   },
 
@@ -222,12 +227,15 @@ const IMMA_DATA = {
   // GA4
   // ─────────────────────────────────────────────────────
   ga4: {
-    status: "instalado",
+    status: "ok",
     tagId:  "G-R8SYSRZFFW",
-    nota:   "GA4 instalado em imma.net.br — coleta iniciará na próxima rodada",
+    nota:   "Primeira coleta realizada: semana 7–13 abr 2026. Propriedade: IMMA - GA4 (p360130500)",
 
-    // Será preenchido a partir da próxima coleta
-    weekly: []
+    // HISTÓRICO SEMANAL — agente ADICIONA ao final
+    weekly: [
+      { week: "7–13 abr", periodo: "2026-04-07", sessoes: 2934, usuarios: 1500, novosUsuarios: 1800, taxaEngajamento: 43.05, sessoesEngajadas: 1263, tempoMedioSessao: "1m14s", status: "ok" }
+      // PRÓXIMA SEMANA: { week: "14–20 abr", periodo: "2026-04-14", ... }
+    ]
   },
 
   // ─────────────────────────────────────────────────────
@@ -264,7 +272,23 @@ const IMMA_DATA = {
         ga4:          "instalado — coleta inicia na próxima rodada"
       },
       notas: "LinkedIn page slug 'immaexperiencias' indisponível — acessada via ID numérico 1210891. Instagram seguidores 2341 (Rodada 1) corrigido para null (sem verificação histórica). GA4 confirmado instalado. RD Station não tentado nesta rodada."
+    },
+    {
+      data:    "2026-04-13",
+      agente:  "imma-relatorio-metricas",
+      rodada:  3,
+      plataformas: {
+        googleAds:    "ok — 1347 imp, 93 cliques, R$591,34, 1 conversão, CPL R$591,34",
+        linkedinAds:  "ok — R$139,42 investido, 2 leads, CPL R$69,71 (campanha Geração leads RH V2)",
+        linkedin:     "parcial — 2057 seguidores, 0 posts publicados na semana 7–13 abr",
+        instagram:    "nao_coletado",
+        searchConsole:"ok — 96 cliques, 6330 imp, CTR 1,5%, posição 7,3 (período exato 7–13 abr)",
+        metaAds:      "sem_campanhas — R$0 investido",
+        rdStation:    "nao_coletado",
+        ga4:          "ok — primeira coleta: 2934 sessões, 1500 usuários ativos, 43,05% taxa de engajamento"
+      },
+      notas: "Primeira coleta GA4 realizada com sucesso. LinkedIn Ads CPL melhorou para R$69,71 (vs R$165 semana anterior). Google Ads: CPL subiu para R$591 com apenas 1 conversão. Search Console: queda nos cliques (96 vs ~185 semanas anteriores) — investigar."
     }
-    // PRÓXIMA RODADA: { data: "2026-04-14", agente: "imma-relatorio-metricas", rodada: 3, ... }
+    // PRÓXIMA RODADA: { data: "2026-04-20", agente: "imma-relatorio-metricas", rodada: 4, ... }
   ]
 };
